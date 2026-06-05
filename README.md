@@ -1,83 +1,164 @@
 # Digital Twin and Machine-Learning Control Allocation for a Six-Motor Spherical Drone
 
-Starter repository for **ME 569 C: Data-Driven Control**.
+ME 569 C: Data-Driven Control final project repository.
 
-This project develops a digital twin of a six-motor spherical drone and trains a machine-learning controller to allocate thrust among the motors for hover, movement, energy efficiency, and motor-failure recovery.
+This project develops a Unity-based digital twin of a six-motor spherical drone and uses Unity ML-Agents to train and test a machine-learning controller for data-driven control allocation. The drone is modeled as a spherical rigid body with six independently controlled motors mounted around the outside of the sphere. The control objective is to allocate motor thrust for hover, target tracking, energy-aware motor usage, and partial motor-failure recovery.
+
+## Current status
+
+The project now includes a working Unity demonstration and preliminary machine-learning results.
+
+Implemented:
+
+- Unity digital twin scene with a spherical drone body and six external motors.
+- Physics-based motor thrust and simplified gimbal command logic.
+- Unity ML-Agents `Agent` implementation with:
+  - Behavior name: `SphericalDrone`
+  - Vector observation size: `34`
+  - Continuous action size: `18`
+  - Discrete actions: `0`
+- Baseline heuristic control allocator for target tracking.
+- Motor-failure testing with reduced motor-health values.
+- Telemetry logger for position error, speed, angular speed, motor health, motor commands, thrust, and energy proxy.
+- Demo HUD for visualizing controller performance during runtime.
+- PPO training configuration for Unity ML-Agents.
+- A preliminary trained ONNX policy from a 150,110-step ML-Agents training run.
+- Baseline and ML telemetry CSV files for normal and motor-failure tests.
+- Isaac Lab skeleton for future robotics-research extension.
 
 ## Project direction
 
-- **Primary long-term target:** Isaac Lab for robotics reinforcement learning and future sim-to-real work.
-- **Current implementation path:** Unity first, using Unity ML-Agents, because it is faster to build, visualize, debug, and present for a class project.
-- **Backup implementation path:** A complete Unity + ML-Agents demo if Isaac Lab setup takes too long.
-
-The backup is **not** removing machine learning. The backup is keeping the ML controller in Unity instead of moving fully into Isaac Lab.
+- **Long-term robotics target:** Isaac Lab, because it is better suited for GPU-accelerated robot learning, reinforcement learning, imitation learning, and future sim-to-real workflows.
+- **Current completed implementation:** Unity + ML-Agents, because Unity made it faster to build, visualize, debug, demonstrate, and train a class-project digital twin.
+- **Machine learning requirement:** Machine learning is not a backup feature. The Unity ML-Agents policy was trained and tested, and future work would improve the learned controller rather than remove it.
 
 ## Repository layout
 
 ```text
 .
+├── UnityProject/
+│   ├── Assets/
+│   │   ├── Scenes/
+│   │   │   └── SphericalDroneDemo.unity
+│   │   ├── Scripts/
+│   │   │   ├── DroneMotor.cs
+│   │   │   ├── SixMotorDroneAgent.cs
+│   │   │   ├── DroneSceneBootstrapper.cs
+│   │   │   ├── KeyboardTargetController.cs
+│   │   │   ├── MotorFailureScheduler.cs
+│   │   │   ├── DroneTelemetryLogger.cs
+│   │   │   └── DroneDemoHUD.cs
+│   │   └── ML-Agents/
+│   │       └── Models/
+│   │           └── SphericalDrone_hover_v1.onnx
+│   └── Packages/
 ├── UnityStarter/
-│   ├── Assets/Scripts/
-│   │   ├── DroneMotor.cs
-│   │   ├── SixMotorDroneAgent.cs
-│   │   ├── DroneSceneBootstrapper.cs
-│   │   ├── KeyboardTargetController.cs
-│   │   └── MotorFailureScheduler.cs
-│   └── configs/
-│       └── spherical_drone_ppo.yaml
 ├── isaac_lab_skeleton/
-│   ├── README.md
-│   └── spherical_drone_env_skeleton.py
+├── ml-agents-configs/
+├── results/
 ├── docs/
-│   ├── CONTROL_DESIGN.md
-│   └── UNITY_SETUP.md
 ├── .gitignore
 └── README.md
 ```
 
-## What this starter code does
+## How to run the Unity demo
 
-The Unity starter code creates a simple six-motor spherical drone:
+1. Open `UnityProject` in Unity 6.
+2. Open the scene:
 
-- A spherical drone body with a Rigidbody.
-- Six motors mounted around the sphere like dice faces.
-- A reinforcement-learning agent using Unity ML-Agents.
-- Continuous actions for six thrust commands and optional pitch/yaw gimbal commands.
-- Observations for position, velocity, orientation, angular velocity, target position, motor health, and previous motor commands.
-- A starter reward function for hover stability, command tracking, energy efficiency, and survival inside the flight area.
-- Motor failure utilities for testing damaged or weakened motors.
+   ```text
+   Assets/Scenes/SphericalDroneDemo.unity
+   ```
 
-## Basic Unity setup
+3. Select `SphericalDroneAgent`.
+4. For baseline/demo mode, set the ML-Agents `Behavior Parameters` component to:
 
-1. Create a new Unity 3D project.
-2. Install the Unity ML-Agents package.
-3. Copy the `UnityStarter/Assets/Scripts` folder into your Unity project's `Assets` folder.
-4. Create an empty GameObject named `Bootstrapper`.
-5. Add the `DroneSceneBootstrapper` component to it.
-6. In the component menu, run **Build Spherical Drone Scene**. This creates a simple drone, target marker, camera, light, and ground plane in the scene.
-7. On the generated `SphericalDroneAgent` GameObject, add:
-   - `Behavior Parameters`
-   - `Decision Requester`
-8. Set Behavior Parameters:
-   - Behavior Name: `SphericalDrone`
-   - Vector Observation Space Size: `34`
-   - Continuous Actions: `18`
-   - Discrete Branches: `0`
-9. Set Decision Requester:
-   - Decision Period: `1`
+   ```text
+   Behavior Name: SphericalDrone
+   Behavior Type: Heuristic Only
+   Vector Observation Space Size: 34
+   Continuous Actions: 18
+   Discrete Branches: 0
+   ```
 
-See `docs/UNITY_SETUP.md` for more detail.
+5. Press Play.
+
+Useful demo controls:
+
+```text
+I / K     move target up/down
+J / L     move target left/right
+U / O     move target forward/backward
+Q / E     rotate target yaw
+F         damage a random motor
+R         repair all motors
+H         hide/show HUD
+```
+
+## How to run the trained ML policy
+
+1. Open the Unity scene.
+2. Select `SphericalDroneAgent`.
+3. In `Behavior Parameters`, set:
+
+   ```text
+   Behavior Type: Inference Only
+   Model: SphericalDrone_hover_v1
+   ```
+
+4. Make sure `Drone Telemetry Logger > Log On Play` is checked if you want a new CSV file.
+5. Press Play and let the policy run without manual keyboard control.
 
 ## Training command
 
-From the folder containing `spherical_drone_ppo.yaml`, run:
+The quick PPO configuration used for the preliminary policy is:
+
+```text
+ml-agents-configs/spherical_drone_ppo_quick.yaml
+```
+
+From the repository root, activate the ML-Agents Python environment and run:
 
 ```bash
-mlagents-learn spherical_drone_ppo.yaml --run-id=spherical_drone_v0
+mlagents-learn ./ml-agents-configs/spherical_drone_ppo_quick.yaml --run-id=spherical_drone_hover_v1 --force
 ```
 
 Then press Play in Unity when the terminal says it is waiting for the Unity environment.
 
+## Results summary
+
+Telemetry files are stored in `results/`.
+
+| Run | Description |
+|---|---|
+| `baseline_normal_telemetry.csv` | Baseline allocator extended/nominal test run |
+| `baseline_fault_telemetry.csv` | Baseline allocator with motor-failure test |
+| `ml_normal_telemetry.csv` | Trained ML policy nominal test |
+| `ml_fault_telemetry.csv` | Trained ML policy with motor-failure test |
+
+Preliminary results show that the baseline allocator currently tracks the target with lower average position error and lower mean thrust usage than the first trained ML policy. The ML policy completed the full training and inference pipeline, but it still needs better reward shaping, curriculum training, and constrained allocation before it can outperform the baseline.
+
 ## Current limitations
 
-This is starter code, not a finished flight controller. The physics model is simplified, and the motor/gimbal model is intentionally lightweight so that the project can get running quickly. The next steps are to tune the reward function, improve the motor model, add better failure cases, and compare learned control allocation against a baseline controller.
+This is a preliminary research prototype, not a finished flight controller. Current limitations include:
+
+- Simplified drone physics and simplified motor/gimbal model.
+- No calibrated aerodynamic model for the spherical frame.
+- No real battery, current, or propeller-efficiency model.
+- Preliminary reward function that does not yet produce an efficient learned controller.
+- Short training horizon for a difficult nonlinear flight-control problem.
+- Fault handling is based on simplified motor-health scaling.
+- Isaac Lab version is only a future skeleton, not a complete environment.
+
+## Recommended next steps
+
+- Add curriculum learning: hover first, then target tracking, then motor failures.
+- Reduce the action space or constrain the neural network output through a model-based allocation layer.
+- Improve reward weights for stability, low angular velocity, smooth commands, and energy use.
+- Add more realistic actuator limits and rate limits.
+- Compare additional training runs against the baseline telemetry.
+- Extend the project to Isaac Lab for faster parallel robotics training and better sim-to-real workflows.
+
+## Attribution
+
+Initial starter code structure and debugging support were developed with ChatGPT assistance and then modified, tested, trained, and evaluated by the author. Literature, Unity ML-Agents documentation, NVIDIA Isaac Lab documentation, and course feedback informed the final project direction.
