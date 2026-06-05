@@ -363,6 +363,8 @@ GameObject:
   - component: {fileID: 611075860}
   - component: {fileID: 611075859}
   - component: {fileID: 611075866}
+  - component: {fileID: 611075868}
+  - component: {fileID: 611075867}
   m_Layer: 0
   m_Name: SphericalDroneAgent
   m_TagString: Untagged
@@ -433,6 +435,15 @@ MonoBehaviour:
   - {fileID: 2144859733}
   - {fileID: 1303592278}
   maxGimbalAngleDeg: 65
+  heuristicControlMode: 1
+  baselineTorqueAssist: 1
+  positionKp: 3
+  velocityKd: 2.2
+  maxDesiredAcceleration: 16
+  attitudeKp: 10
+  attitudeKd: 2.5
+  yawKp: 1.5
+  maxAssistTorque: 8
   targetMarker: {fileID: 1357678932}
   targetPositionLocal: {x: 0, y: 2, z: 0}
   targetYawDeg: 0
@@ -456,6 +467,7 @@ MonoBehaviour:
   energyPenaltyWeight: 0.002
   nearTargetBonus: 0.01
   survivalReward: 0.001
+  failureRecoveryBonus: 0.004
   verboseWarnings: 1
 --- !u!114 &611075862
 MonoBehaviour:
@@ -573,6 +585,38 @@ MonoBehaviour:
   DecisionPeriod: 1
   DecisionStep: 0
   TakeActionsBetweenDecisions: 1
+--- !u!114 &611075867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611075858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d70fc81eb798e348adc091a7d613dcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DroneDemoHUD
+  agent: {fileID: 611075861}
+  showHud: 1
+  toggleHudKey: 104
+--- !u!114 &611075868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611075858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14ac7242c0b742446a1e536cb4d996a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DroneTelemetryLogger
+  agent: {fileID: 611075861}
+  logOnPlay: 1
+  samplePeriodSeconds: 0.2
+  fileNamePrefix: spherical_drone_telemetry
+  logMotorDetails: 1
 --- !u!1 &716377251
 GameObject:
   m_ObjectHideFlags: 0
